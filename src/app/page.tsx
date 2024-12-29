@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { supabase } from '@/hooks/supabaseClient'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar"
 import { Button } from "@/app/components/ui/button"
@@ -22,75 +23,90 @@ type Post = {
 }
 
 type Project = {
-  id: string
+  id: number
   title: string
   description: string
   participants: number
 }
 
-// Dummy data
-const dummyPosts: Post[] = [
-  {
-    id: '1',
-    type: 'dekoboko',
-    content: 'Reactでウェブアプリを作成しました！',
-    likes: 5,
-    interests: 3,
-    author: {
-      name: 'ユーザー1',
-      image: '/placeholder.svg'
-    }
-  },
-  {
-    id: '2',
-    type: 'hekomu',
-    content: 'バックエンド開発について学びたいです。',
-    likes: 2,
-    interests: 7,
-    author: {
-      name: 'ユーザー2',
-      image: '/placeholder.svg'
-    }
-  },
-]
-
-const dummyProjects: Project[] = [
-  {
-    id: '1',
-    title: 'AI駆動型農業システム',
-    description: '機械学習を使用して作物の収穫量を最適化するプロジェクト',
-    participants: 8,
-  },
-  {
-    id: '2',
-    title: 'ブロックチェーンベースの投票システム',
-    description: '透明性と安全性を確保した次世代の電子投票システム',
-    participants: 12,
-  },
-]
+type UserProfile = {
+  name: string
+  level: number
+  avatar_url: string
+  titles: string[]
+  skills: string[]
+}
 
 export default function App() {
   const [posts, setPosts] = useState<Post[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [activeTab, setActiveTab] = useState('home')
+  const [loadingPosts, setLoadingPosts] = useState(false)
+  const [loadingProjects, setLoadingProjects] = useState(false)
+
+  // Fetch posts from Supabase
+  const fetchPosts = async () => {
+    setLoadingPosts(true)
+    const { data, error } = await supabase.from('posts').select(`
+      id, type, content, likes, comments AS interests,
+      author: author_id ( name, avatar_url )
+    `)
+
+    if (error) {
+      console.error('Error fetching posts:', error)
+    } else {
+      const formattedPosts = (data || []).map(post => ({
+        ...post,
+        author: {
+          name: post.author?.name || 'Unknown User',
+          image: post.author?.avatar_url || '/placeholder.svg'
+        }
+      }))
+      setPosts(formattedPosts)
+    }
+    setLoadingPosts(false)
+  }
+
+  // Fetch projects from Supabase
+  const fetchProjects = async () => {
+    setLoadingProjects(true)
+    const { data, error } = await supabase.from('projects').select('*')
+
+    if (error) {
+      console.error('Error fetching projects:', error)
+    } else {
+      setProjects(data || [])
+    }
+    setLoadingProjects(false)
+  }
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    const { data: user, error } = await supabase.from('users').select(`
+      name, level, avatar_url,
+      titles: user_titles(title),
+      skills: user_skills(skill_name)
+    `).single()
+
+    if (error) {
+      console.error('Error fetching user profile:', error)
+    } else {
+      setUserProfile({
+        name: user.name,
+        level: user.level,
+        avatar_url: user.avatar_url || '/placeholder.svg',
+        titles: user.titles.map((t: any) => t.title),
+        skills: user.skills.map((s: any) => s.skill_name),
+      })
+    }
+  }
 
   useEffect(() => {
-    // TODO: Fetch data from Supabase
-    setPosts(dummyPosts)
-    setProjects(dummyProjects)
+    fetchPosts()
+    fetchProjects()
+    fetchUserProfile()
   }, [])
-
-  const handleLike = (postId: string) => {
-    setPosts(posts.map(post => 
-      post.id === postId ? { ...post, likes: post.likes + 1 } : post
-    ))
-  }
-
-  const handleInterest = (postId: string) => {
-    setPosts(posts.map(post => 
-      post.id === postId ? { ...post, interests: post.interests + 1 } : post
-    ))
-  }
 
   // Home component
   const Home = () => (
@@ -106,72 +122,75 @@ export default function App() {
         </div>
       </div>
       <Input placeholder="新しい投稿を作成..." className="mb-4" />
-      <AnimatePresence>
-        {posts.map(post => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-card text-card-foreground rounded-lg p-6 shadow-lg mb-4 transition-all hover:shadow-xl"
-          >
-            <div className="flex items-center space-x-4 mb-4">
-              <Avatar>
-                <AvatarImage src={post.author.image} alt={post.author.name} />
-                <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-semibold">{post.author.name}</h3>
-                <span className="text-sm text-muted-foreground">{post.type === 'dekoboko' ? '凸' : '凹'}</span>
+      {loadingPosts ? (
+        <p>投稿を読み込んでいます...</p>
+      ) : (
+        <AnimatePresence>
+          {posts.map(post => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-card text-card-foreground rounded-lg p-6 shadow-lg mb-4 transition-all hover:shadow-xl"
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <Avatar>
+                  <AvatarImage src={post.author.image} alt={post.author.name} />
+                  <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold">{post.author.name}</h3>
+                  <span className="text-sm text-muted-foreground">{post.type === 'dekoboko' ? '凸' : '凹'}</span>
+                </div>
               </div>
-            </div>
-            <p className="mb-4">{post.content}</p>
-            <div className="flex justify-between">
-              <Button variant="ghost" size="sm" onClick={() => handleLike(post.id)}>
-                <ThumbsUp className="mr-2 h-4 w-4" />
-                いいっ ({post.likes})
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => handleInterest(post.id)}>
-                <Eye className="mr-2 h-4 w-4" />
-                気になるっ ({post.interests})
-              </Button>
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+              <p className="mb-4">{post.content}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      )}
     </div>
   )
 
   // Profile component
   const Profile = () => (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4 mb-6">
-        <Avatar className="w-24 h-24">
-          <AvatarImage src="/placeholder.svg" alt="ユーザー" />
-          <AvatarFallback>ユ</AvatarFallback>
-        </Avatar>
-        <div>
-          <h2 className="text-2xl font-bold">ユーザー名</h2>
-          <p className="text-muted-foreground">冒険者レベル: 5</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card text-card-foreground rounded-lg p-6 shadow-lg">
-          <h3 className="text-lg font-semibold mb-2">称号</h3>
-          <div className="flex flex-wrap gap-2">
-            <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm">初級プログラマー</span>
-            <span className="bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-sm">チームプレイヤー</span>
+      {userProfile ? (
+        <>
+          <div className="flex items-center space-x-4 mb-6">
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={userProfile.avatar_url} alt={userProfile.name} />
+              <AvatarFallback>{userProfile.name[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-2xl font-bold">{userProfile.name}</h2>
+              <p className="text-muted-foreground">冒険者レベル: {userProfile.level}</p>
+            </div>
           </div>
-        </div>
-        <div className="bg-card text-card-foreground rounded-lg p-6 shadow-lg">
-          <h3 className="text-lg font-semibold mb-2">スキル</h3>
-          <ul className="list-disc list-inside">
-            <li>JavaScript</li>
-            <li>React</li>
-            <li>Node.js</li>
-          </ul>
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-card text-card-foreground rounded-lg p-6 shadow-lg">
+              <h3 className="text-lg font-semibold mb-2">称号</h3>
+              <div className="flex flex-wrap gap-2">
+                {userProfile.titles.map((title, idx) => (
+                  <span key={idx} className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-sm">
+                    {title}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="bg-card text-card-foreground rounded-lg p-6 shadow-lg">
+              <h3 className="text-lg font-semibold mb-2">スキル</h3>
+              <ul className="list-disc list-inside">
+                {userProfile.skills.map((skill, idx) => (
+                  <li key={idx}>{skill}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </>
+      ) : (
+        <p>プロフィールを読み込んでいます...</p>
+      )}
     </div>
   )
 
@@ -185,23 +204,26 @@ export default function App() {
           新しいプロジェクト
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projects.map(project => (
-          <motion.div
-            key={project.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card text-card-foreground rounded-lg p-6 shadow-lg transition-all hover:shadow-xl cursor-pointer"
-          >
-            <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
-            <p className="text-muted-foreground mb-4">{project.description}</p>
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">参加者: {project.participants}</span>
-              <Button variant="outline" size="sm">詳細を見る</Button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      {loadingProjects ? (
+        <p>プロジェクトを読み込んでいます...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {projects.map(project => (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-card text-card-foreground rounded-lg p-6 shadow-lg transition-all hover:shadow-xl cursor-pointer"
+            >
+              <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
+              <p className="text-muted-foreground mb-4">{project.description}</p>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">参加者: {project.participants}</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -209,31 +231,20 @@ export default function App() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm pb-4">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-3xl font-bold">Dekoboko Developer</h1>
-              <div className="flex items-center space-x-2">
-                <Input placeholder="検索..." className="w-64" />
-                <Button size="icon" variant="ghost">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="home">
-                <User className="mr-2 h-4 w-4" />
-                ホーム
-              </TabsTrigger>
-              <TabsTrigger value="profile">
-                <User className="mr-2 h-4 w-4" />
-                プロフィール
-              </TabsTrigger>
-              <TabsTrigger value="bouken">
-                <Compass className="mr-2 h-4 w-4" />
-                冒険
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="home">
+              <User className="mr-2 h-4 w-4" />
+              ホーム
+            </TabsTrigger>
+            <TabsTrigger value="profile">
+              <User className="mr-2 h-4 w-4" />
+              プロフィール
+            </TabsTrigger>
+            <TabsTrigger value="bouken">
+              <Compass className="mr-2 h-4 w-4" />
+              冒険
+            </TabsTrigger>
+          </TabsList>
           <TabsContent value="home">
             <Home />
           </TabsContent>
