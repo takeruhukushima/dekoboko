@@ -1,7 +1,7 @@
 "use server";
 
 import { AppVercelDekobokoEvent, AppVercelDekobokoPost } from "@/generated/api";
-import { getSessionAgent } from "@/lib/auth/session";
+import { getSessionAgent } from "@/lib/auth/session.server";
 import { Agent } from "@atproto/api";
 import { redirect } from "next/navigation";
 import { TID } from "@atproto/common";

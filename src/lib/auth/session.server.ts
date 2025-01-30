@@ -1,3 +1,5 @@
+"use server";
+
 import { cookies } from "next/headers";
 import { getIronSession } from "iron-session";
 import { Agent } from "@atproto/api";

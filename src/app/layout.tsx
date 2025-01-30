@@ -31,6 +31,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <header className="bg-gray-900 text-white py-4">
+          <div className="container mx-auto flex justify-between items-center">
+            <nav>
+              <ul className="flex space-x-8">
+                <li><a href="/" className="hover:text-gray-300">ホーム</a></li>
+                <li><a href="/quest" className="hover:text-gray-300">クエスト</a></li>
+                <li><a href="/profile" className="hover:text-gray-300">プロフィール</a></li>
+              </ul>
+            </nav>
+          </div>
+        </header>
+
         <main className="container mx-auto py-8">{children}</main>
 
         <footer className="bg-gray-800 text-white text-center p-4">
