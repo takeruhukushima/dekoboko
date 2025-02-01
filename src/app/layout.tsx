@@ -1,4 +1,4 @@
-import "@/styles/globals.css"
+import "./globals.css"
 import { Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google"
 import { Navigation } from "../components/navigation"
 import type React from "react"
