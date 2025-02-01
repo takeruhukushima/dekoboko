@@ -1,134 +1,168 @@
-"use client";
+"use client"
 
-import { getSessionAgent } from "@/lib/auth/session.server";
-import { Agent, ComAtprotoRepoListRecords } from "@atproto/api";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, Heart, Share2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { post } from "./actions/post";
-import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { MessageCircle, ThumbsUp, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
+import { PostForm } from "@/components/PostForm"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 interface Post {
-  id: string;
-  author: string;
-  timestamp: string;
-  content: string;
-  likes: number;
-  comments: number;
+  id: string
+  author: string
+  timestamp: string
+  content: string
+  likes: number
+  comments: number
+  type: "convex" | "concave";
+  tags: string[];
+  title: string;
 }
 
+const postsData: Post[] = [
+  {
+    id: "1",
+    title: "最初の投稿",
+    author: "ユーザー1",
+    timestamp: "2024-01-01T12:00:00Z",
+    content: "これは最初の投稿です。凸凹アプリへようこそ！",
+    likes: 10,
+    comments: 3,
+    type: "convex",
+    tags: ["初心者向け", "挨拶"],
+  },
+  {
+    id: "2",
+    title: "二番目の投稿",
+    author: "ユーザー2",
+    timestamp: "2024-01-02T18:30:00Z",
+    content: "二番目の投稿です。今日は天気が良いですね。",
+    likes: 5,
+    comments: 1,
+    type: "concave",
+    tags: ["日常", "天気"],
+  },
+  {
+    id: "3",
+    title: "三番目の投稿",
+    author: "ユーザー3",
+    timestamp: "2024-01-03T09:15:00Z",
+    content: "三番目の投稿です。何か面白いことないかな。",
+    likes: 12,
+    comments: 5,
+    type: "convex",
+    tags: ["質問", "雑談"],
+  },
+];
+
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>(postsData);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
-    async function fetchPosts() {
-      const agent: Agent | null = await getSessionAgent();
-
-      if (agent) {
-        const response = await agent.com.atproto.repo.listRecords({
-          collection: "app.vercel.dekoboko.post",
-          repo: agent.assertDid,
-        }) as unknown as { records: Array<{ rkey: string; value: { authorDid: string; createdAt: string; text: string; likes?: number; comments?: number } }> };
-
-        if ('records' in response) {
-          const formattedPosts = response.records.map((record) => ({
-            id: record.rkey,
-            author: record.value.authorDid,
-            timestamp: record.value.createdAt,
-            content: record.value.text,
-            likes: record.value.likes || 0,
-            comments: record.value.comments || 0,
-          }));
-
-          setPosts(formattedPosts);
-        } else {
-          console.error("Unexpected response format", response);
-        }
-      }
+    let filteredPosts = postsData;
+    if (filterType === "convex") {
+      filteredPosts = postsData.filter((post) => post.type === "convex");
+    } else if (filterType === "concave") {
+      filteredPosts = postsData.filter((post) => post.type === "concave");
+    } else {
+      filteredPosts = postsData; // Show all posts when filterType is "all" or any other value
     }
-
-    fetchPosts();
-  }, []);
+    setPosts(filteredPosts);
+  }, [filterType]);
 
   return (
-    <div>
-      <div className="w-full max-w-2xl mx-auto space-y-4 p-4">
-        {/* 新規投稿フォーム */}
-        <Card className="border-2">
-          <form action={post}>
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <Avatar>
-                  <AvatarImage src="/placeholder-avatar.jpg" />
-                  <AvatarFallback>UN</AvatarFallback>
-                </Avatar>
-                <div className="font-semibold">新規投稿</div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                name="text"
-                placeholder="いまどうしてる？"
-                className="min-h-[100px]"
-              />
-            </CardContent>
-            <CardFooter className="flex justify-end">
-              <Button type="submit">投稿する</Button>
-            </CardFooter>
-          </form>
-        </Card>
+    <div className="min-h-screen bg-white text-black flex flex-col">
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="space-y-8">
+          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold tracking-tight">dekoboko</h1>
+              <p className="text-xl text-gray-600">気になる話題を投稿してみましょう</p>
+            </div>
+            <div className="flex justify-center"> {/* Center the ToggleGroup */}
+              <ToggleGroup
+                type="single"
+                defaultValue="all"
+                value={filterType}
+                onValueChange={setFilterType}
+              >
+                <ToggleGroupItem value="all" aria-label="All">ALL</ToggleGroupItem>
+                <ToggleGroupItem value="convex" aria-label="凸">凸</ToggleGroupItem>
+                <ToggleGroupItem value="concave" aria-label="凹">凹</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsFormOpen(!isFormOpen)}
+              className="rounded-full ml-2"
+            >
+              <Plus className="h-6 w-6" />
+            </Button>
+          </div>
 
-        {/* 投稿一覧 */}
-        <ScrollArea className="h-[600px]">
-          <div className="space-y-4">
+          {isFormOpen && (
+            <div className="mt-4">
+              <PostForm />
+            </div>
+          )}
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {posts.map((post) => (
-              <Card key={post.id} className="border">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarImage src="/placeholder-avatar.jpg" />
-                      <AvatarFallback>{post.author[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-semibold">{post.author}</div>
-                      <div className="text-sm text-gray-500">
-                        {post.timestamp}
-                      </div>
-                    </div>
+              <Card key={post.id} className="p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">{post.title}</h2>
+                    <p className="text-sm text-gray-500">by {post.author}</p>
                   </div>
-                </CardHeader>
+                  <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-sm">
+                    {post.type === "convex" ? "凸" : "凹"}
+                  </span>
+                </div>
+
                 <CardContent>
-                  <p className="text-gray-700">{post.content}</p>
-                </CardContent>
-                <CardFooter>
-                  <div className="flex space-x-4 text-gray-500">
-                    <Button variant="ghost" size="sm" className="space-x-2">
-                      <Heart className="h-4 w-4" />
-                      <span>{post.likes}</span>
+                  <p className="mb-4 text-gray-700">{post.content}</p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {post.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-sm"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-2" />
+                      {post.likes}
                     </Button>
-                    <Button variant="ghost" size="sm" className="space-x-2">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>{post.comments}</span>
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Share2 className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-600 hover:text-black"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      {post.comments}
                     </Button>
                   </div>
-                </CardFooter>
+                </CardContent>
               </Card>
             ))}
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      </main>
+      <footer className="py-4 text-center text-gray-500">
+        © 2023 dekoboko. All rights reserved.
+      </footer>
     </div>
   );
 }

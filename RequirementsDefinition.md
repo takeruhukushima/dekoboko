@@ -12,28 +12,7 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageCircle, ThumbsUp } from "lucide-react"
 
-const posts = [
-  {
-    id: 1,
-    type: "convex",
-    title: "新しい技術について",
-    content: "最近学んだ技術についての投稿です...",
-    author: "User1",
-    tags: ["技術", "学習"],
-    likes: 15,
-    comments: 5
-  },
-  {
-    id: 2,
-    type: "concave",
-    title: "困っていること",
-    content: "この問題について誰か助けてください...",
-    author: "User2",
-    tags: ["質問", "助けて"],
-    likes: 8,
-    comments: 12
-  }
-]
+ポストの投稿は、lexiconをもとにお願いします。
 
 export default function Home() {
   return (

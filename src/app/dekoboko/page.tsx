@@ -1,10 +1,96 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageCircle, ThumbsUp } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Agent } from "@atproto/api";
+import { getSessionAgent } from "@/lib/auth/session.server";
+
+interface Post {
+  id: string;
+  author: string;
+  timestamp: string;
+  content: string;
+  likes: number;
+  comments: number;
+  type: "convex" | "concave";
+  tags: string[];
+  title: string;
+}
+
+const postsData: Post[] = [
+  {
+    id: "1",
+    title: "最初の投稿",
+    author: "ユーザー1",
+    timestamp: "2024-01-01T12:00:00Z",
+    content: "これは最初の投稿です。凸凹アプリへようこそ！",
+    likes: 10,
+    comments: 3,
+    type: "convex",
+    tags: ["初心者向け", "挨拶"],
+  },
+  {
+    id: "2",
+    title: "二番目の投稿",
+    author: "ユーザー2",
+    timestamp: "2024-01-02T18:30:00Z",
+    content: "二番目の投稿です。今日は天気が良いですね。",
+    likes: 5,
+    comments: 1,
+    type: "concave",
+    tags: ["日常", "天気"],
+  },
+  {
+    id: "3",
+    title: "三番目の投稿",
+    author: "ユーザー3",
+    timestamp: "2024-01-03T09:15:00Z",
+    content: "三番目の投稿です。何か面白いことないかな。",
+    likes: 12,
+    comments: 5,
+    type: "convex",
+    tags: ["質問", "雑談"],
+  },
+];
 
 
 export default function Home() {
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      const agent: Agent | null = await getSessionAgent();
+
+      if (agent) {
+        // const response = await agent.com.atproto.repo.listRecords({
+        //   collection: "app.vercel.dekoboko.post",
+        //   repo: agent.assertDid,
+        // }) as unknown as { records: Array<{ rkey: string; value: { authorDid: string; createdAt: string; text: string; likes?: number; comments?: number } }> };
+
+        // if ('records' in response) {
+        //   const formattedPosts = response.records.map((record) => ({
+        //     id: record.rkey,
+        //     author: record.value.authorDid,
+        //     timestamp: record.value.createdAt,
+        //     content: record.value.text,
+        //     likes: record.value.likes || 0,
+        //     comments: record.value.comments || 0,
+        //   }));
+
+        //   setPosts(formattedPosts);
+        // } else {
+        //   console.error("Unexpected response format", response);
+        // }
+        setPosts(postsData); //  API call を一旦mock dataに置き換え
+      }
+    }
+
+    fetchPosts();
+  }, []);
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">

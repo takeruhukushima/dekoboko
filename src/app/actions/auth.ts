@@ -20,6 +20,8 @@ export async function authorize(formData: FormData) {
     throw new Error("ハンドルが指定されていません。");
   }
 
+  console.error("handle:", handle); // handle の値を出力
+
   const url = await client.authorize(handle, {
     scope: "atproto transition:generic",
   });
