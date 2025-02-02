@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Navigation } from "@/components/ui/navbar";
 
 // フォントの設定
 const geistSans = localFont({
@@ -31,14 +32,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* メインコンテンツ */}
+        <Navigation />
         <main className="container mx-auto py-8">{children}</main>
 
-        {/* フッター */}
-        <footer className="bg-gray-800 text-white text-center p-4">
+        <footer className="bg-gray-800 text-white text-center p-4 w-screen fixed bottom-0">
           <p>© 2025 Dekoboko App. All Rights Reserved.</p>
         </footer>
-
       </body>
     </html>
   );

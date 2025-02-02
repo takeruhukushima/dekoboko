@@ -4,13 +4,47 @@
 import { LexiconDoc, Lexicons } from '@atproto/lexicon'
 
 export const schemaDict = {
-  AppVercelDecobokoPost: {
+  AppVercelDekobokoQuest: {
     lexicon: 1,
-    id: 'app.vercel.decoboko.post',
+    id: 'app.vercel.dekoboko.quest',
     defs: {
       main: {
         type: 'record',
-        description: 'Record containing a decoboko post.',
+        key: 'tid',
+        record: {
+          type: 'object',
+          required: ['title', 'description', 'achievement', 'createdAt'],
+          properties: {
+            title: {
+              type: 'string',
+              description: 'The title of the quest',
+            },
+            description: {
+              type: 'string',
+              description: 'The description of the quest',
+            },
+            achievement: {
+              type: 'string',
+              description: 'Achievements for participating in quest',
+            },
+            createdAt: {
+              type: 'string',
+              format: 'datetime',
+              description:
+                'Client-declared timestamp when this quest was originally created.',
+            },
+          },
+        },
+      },
+    },
+  },
+  AppVercelDekobokoPost: {
+    lexicon: 1,
+    id: 'app.vercel.dekoboko.post',
+    defs: {
+      main: {
+        type: 'record',
+        description: 'Record containing a dekoboko post.',
         key: 'tid',
         record: {
           type: 'object',
@@ -37,4 +71,7 @@ export const schemaDict = {
 
 export const schemas = Object.values(schemaDict)
 export const lexicons: Lexicons = new Lexicons(schemas)
-export const ids = { AppVercelDecobokoPost: 'app.vercel.decoboko.post' }
+export const ids = {
+  AppVercelDekobokoQuest: 'app.vercel.dekoboko.quest',
+  AppVercelDekobokoPost: 'app.vercel.dekoboko.post',
+}

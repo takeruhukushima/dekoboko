@@ -1,10 +1,10 @@
 {
   "lexicon": 1,
-  "id": "app.vercel.decoboko.post",
+  "id": "app.vercel.dekoboko.post",
   "defs": {
     "main": {
       "type": "record",
-      "description": "Record containing a decoboko post.",
+      "description": "Record containing a dekoboko post.",
       "key": "tid",
       "record": {
         "type": "object",

@@ -1,5 +1,3 @@
-// From https://github.com/marukun712/stellar/blob/master/app/lib/auth/storage.ts
-
 import type {
   NodeSavedSession,
   NodeSavedSessionStore,
