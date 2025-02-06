@@ -17,123 +17,20 @@ model AuthState {
   state String
 }
 
-model User {
-  id             String          @id @default(uuid())
-  username       String          @unique
-  email          String          @unique
-  password       String
-  profileImage   String? // Optional profile image URL
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  projects       Project[]
-  participations Participation[]
-  notifications  Notification[]
-  NFTTitle       NFTTitle[]
-  Message        Message[]
-  Achievement    Achievement[]
+model Post {
+  rkey      String   @id
+  text      String
+  createdAt DateTime
+  did       String
+  record    String
 }
 
-model Project {
-  id            String          @id @default(uuid())
-  title         String
-  description   String
-  rewardType    RewardType
-  rewardDetails String? // Details about the reward (e.g., amount or NFT metadata)
-  creatorId     String
-  creator       User            @relation(fields: [creatorId], references: [id])
-  members       Participation[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  status        ProjectStatus   @default(DRAFT)
-  Chat          Chat[]
-  Report        Report[]
-}
-
-enum RewardType {
-  NFT
-  CRYPTOCURRENCY
-  POINTS
-}
-
-enum ProjectStatus {
-  DRAFT
-  ONGOING
-  COMPLETED
-}
-
-model Participation {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  role      String // Role of the user in the project
-  joinedAt  DateTime @default(now())
-}
-
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  content   String
-  createdAt DateTime @default(now())
-  isRead    Boolean  @default(false)
-}
-
-model NFTTitle {
-  id        String    @id @default(uuid())
-  title     String
-  ownerId   String
-  owner     User      @relation(fields: [ownerId], references: [id])
-  issuedAt  DateTime  @default(now())
-  revokedAt DateTime?
-}
-
-model Chat {
-  id        String    @id @default(uuid())
-  projectId String
-  project   Project   @relation(fields: [projectId], references: [id])
-  messages  Message[]
-  createdAt DateTime  @default(now())
-}
-
-model Message {
-  id       String   @id @default(uuid())
-  chatId   String
-  chat     Chat     @relation(fields: [chatId], references: [id])
-  senderId String
-  sender   User     @relation(fields: [senderId], references: [id])
-  content  String
-  sentAt   DateTime @default(now())
-}
-
-model Achievement {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
+model Quest {
+  rkey        String   @id
   title       String
-  description String?
-  earnedAt    DateTime @default(now())
+  description String
+  achievement String
+  createdAt   DateTime
+  did         String
+  record      String
 }
-
-model Report {
-  id        String   @id @default(uuid())
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  content   String
-  createdAt DateTime @default(now())
-}
-
-/**
- * 全部構文エラー
- * -- 自分のデータのみ読み取れる
- * CREATE POLICY "Allow authenticated read access"
- * ON users
- * FOR SELECT
- * USING (auth.uid() = id);
- * -- 自分のデータのみ更新できる
- * CREATE POLICY "Allow authenticated update access"
- * ON users
- * FOR UPDATE
- * USING (auth.uid() = id);
- */
